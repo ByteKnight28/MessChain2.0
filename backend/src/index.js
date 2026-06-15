@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const studentRoutes = require('./routes/student');
 const staffRoutes = require('./routes/staff');
+const publicRoutes = require('./routes/public');
 
 // Cron jobs
 const { startMidnightJob } = require('./jobs/midnight');
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/staff', staffRoutes);
+app.use('/api/public', publicRoutes);
 
 // Start midnight cron job
 startMidnightJob();

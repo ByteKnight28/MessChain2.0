@@ -2,6 +2,34 @@ const prisma = require('../config/db');
 const timelockService = require('../services/timelock');
 
 /**
+ * GET /api/staff/profile
+ */
+async function getProfile(req, res) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        messId: true,
+        mess: { select: { name: true } },
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ user });
+  } catch (err) {
+    console.error('Get profile error:', err);
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+}
+
+/**
  * POST /api/staff/verify-qr
  * Body: { studentId, messId, date }
  *
@@ -64,4 +92,4 @@ async function verifyQR(req, res) {
   }
 }
 
-module.exports = { verifyQR };
+module.exports = { verifyQR, getProfile };

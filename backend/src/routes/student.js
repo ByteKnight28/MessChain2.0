@@ -19,4 +19,7 @@ router.post('/vote', studentController.vote);
 router.post('/request-rebate', studentController.requestRebate);
 router.post('/request-mess-change', studentController.requestMessChange);
 
+// Verify Meal
+router.post('/verify-meal', studentController.verifyMeal);
+
 module.exports = router;

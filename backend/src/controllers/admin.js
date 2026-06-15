@@ -7,6 +7,7 @@ const rebateService = require('../services/rebate');
 const messService = require('../services/mess');
 const governanceService = require('../services/governance');
 const ipfsService = require('../services/ipfs');
+const { runMidnightJob } = require('../jobs/midnight');
 
 /**
  * POST /api/admin/create-staff
@@ -57,13 +58,13 @@ async function createStaff(req, res) {
  */
 async function mintTokens(req, res) {
   try {
-    const { studentId, amount } = req.body;
+    const { rollNumber, amount } = req.body;
 
-    if (!studentId || !amount) {
-      return res.status(400).json({ error: 'studentId and amount are required' });
+    if (!rollNumber || !amount) {
+      return res.status(400).json({ error: 'rollNumber and amount are required' });
     }
 
-    const student = await prisma.user.findUnique({ where: { id: studentId } });
+    const student = await prisma.user.findFirst({ where: { rollNumber } });
     if (!student || student.role !== 'STUDENT') {
       return res.status(404).json({ error: 'Student not found' });
     }
@@ -344,6 +345,19 @@ async function getStudents(req, res) {
   }
 }
 
+/**
+ * POST /api/admin/trigger-cron
+ */
+async function triggerCron(req, res) {
+  try {
+    const stats = await runMidnightJob();
+    res.json({ message: 'Midnight cron job executed manually', stats });
+  } catch (err) {
+    console.error('Trigger cron error:', err);
+    res.status(500).json({ error: 'Failed to run cron job' });
+  }
+}
+
 module.exports = {
   createStaff,
   mintTokens,
@@ -358,4 +372,5 @@ module.exports = {
   approveMessChange,
   rejectMessChange,
   getStudents,
+  triggerCron,
 };

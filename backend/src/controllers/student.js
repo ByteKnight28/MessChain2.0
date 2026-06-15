@@ -1,4 +1,5 @@
 const prisma = require('../config/db');
+const timelockService = require('../services/timelock');
 const tokenService = require('../services/token');
 const rebateService = require('../services/rebate');
 const messService = require('../services/mess');
@@ -178,6 +179,46 @@ async function requestMessChange(req, res) {
   }
 }
 
+/**
+ * POST /api/student/verify-meal
+ * Simulates a student scanning a QR code at the mess counter.
+ */
+async function verifyMeal(req, res) {
+  try {
+    const { scannedMessId } = req.body;
+
+    if (!scannedMessId) {
+      return res.status(400).json({ error: 'scannedMessId is required from the QR code' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user.messId) {
+      return res.status(400).json({ error: 'You are not assigned to any mess' });
+    }
+
+    if (scannedMessId !== user.messId) {
+      return res.status(403).json({ error: 'Invalid QR: This QR code belongs to a different mess.' });
+    }
+
+    // Use current UTC date for the transaction
+    const now = new Date();
+    const dateSec = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 1000);
+
+    // Verify if the daily transaction actually exists before attempting to verify it
+    const exists = await timelockService.hasTx(user.walletAddress, user.messId, dateSec);
+    if (!exists) {
+      return res.status(400).json({ error: 'No daily transaction found for today. Have you run the midnight cron?' });
+    }
+
+    const txHash = await timelockService.verifyTx(user.walletAddress, user.messId, dateSec);
+
+    res.json({ message: 'Meal verified successfully!', txHash });
+  } catch (err) {
+    console.error('Verify meal error:', err);
+    res.status(500).json({ error: 'Failed to verify meal. Have you already verified today?' });
+  }
+}
+
 module.exports = {
   getProfile,
   getBalance,
@@ -186,4 +227,5 @@ module.exports = {
   vote,
   requestRebate,
   requestMessChange,
+  verifyMeal,
 };

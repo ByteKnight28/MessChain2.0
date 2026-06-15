@@ -31,4 +31,7 @@ router.post('/mess-changes/:id/reject', adminController.rejectMessChange);
 // Student listing
 router.get('/students', adminController.getStudents);
 
+// Manual triggers
+router.post('/trigger-cron', adminController.triggerCron);
+
 module.exports = router;
