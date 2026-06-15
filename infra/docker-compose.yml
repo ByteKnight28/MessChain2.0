@@ -1,0 +1,32 @@
+version: '3.8'
+services:
+  besu:
+    image: hyperledger/besu:latest
+    volumes:
+      - ./besu:/config
+      - ${DATA_DIR}/besu-data:/data
+    ports:
+      - "8545:8545"   # HTTP RPC
+      - "8546:8546"   # WebSocket
+    command: >
+      --config-file=/config/config.toml
+      --data-path=/data
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: mess
+      POSTGRES_PASSWORD: mess_secret
+      POSTGRES_DB: mess_auth
+    volumes:
+      - ${DATA_DIR}/pg-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  ipfs:
+    image: ipfs/kubo:latest
+    volumes:
+      - ${DATA_DIR}/ipfs-data:/data/ipfs
+    ports:
+      - "5001:5001"   # API
+      - "8080:8080"   # Gateway
